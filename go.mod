@@ -1,3 +1,3 @@
-module github.com/csvsa/csvsa
+module github.com/ABHINAVGARG05/CSVSA
 
-go 1.21
+go 1.25.0

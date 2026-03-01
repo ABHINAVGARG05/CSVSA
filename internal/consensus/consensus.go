@@ -5,6 +5,7 @@
 // Given sets of vulnerabilities from n scanners: V₁, V₂, ..., Vₙ
 //
 // Definitions:
+//
 //   - Consensus (Intersection): C = V₁ ∩ V₂ ∩ ... ∩ Vₙ
 //     Vulnerabilities found by ALL scanners
 //
@@ -67,6 +68,20 @@ func (a *Analyzer) Analyze(target string, results []models.ScanResult) *models.C
 	successfulResults := filterSuccessful(results)
 	scannerNames := extractScannerNames(successfulResults)
 
+	if len(successfulResults) == 0 || len(scannerNames) == 0 {
+		return &models.ConsensusResult{
+			Target:             target,
+			Scanners:           scannerNames,
+			Consensus:          []models.Vulnerability{},
+			UniqueFindings:     map[string][]models.Vulnerability{},
+			AllVulnerabilities: []models.Vulnerability{},
+			OverlapPercentage:  0,
+			ScanResults:        results,
+			AnalysisTime:       time.Now(),
+			TotalDuration:      time.Since(startTime),
+		}
+	}
+
 	// Build vulnerability occurrence map
 	// Key: vulnerability key (CVE|Package|Version)
 	// Value: VulnerabilityOccurrence with scanner list and merged data
@@ -102,6 +117,7 @@ func (a *Analyzer) Analyze(target string, results []models.ScanResult) *models.C
 type VulnerabilityOccurrence struct {
 	Vulnerability models.Vulnerability
 	Scanners      []string
+	ScannerSet    map[string]struct{}
 	Count         int
 }
 
@@ -124,9 +140,12 @@ func (a *Analyzer) buildOccurrenceMap(results []models.ScanResult) map[string]*V
 			key := vuln.Key()
 
 			if occ, exists := occurrences[key]; exists {
-				// Add scanner to existing occurrence
-				occ.Scanners = append(occ.Scanners, result.Scanner)
-				occ.Count++
+				// Add scanner to existing occurrence (unique per scanner)
+				if _, seen := occ.ScannerSet[result.Scanner]; !seen {
+					occ.ScannerSet[result.Scanner] = struct{}{}
+					occ.Scanners = append(occ.Scanners, result.Scanner)
+					occ.Count++
+				}
 				// Merge vulnerability data (keep more complete version)
 				occ.Vulnerability = a.mergeVulnerability(occ.Vulnerability, vuln)
 			} else {
@@ -134,6 +153,7 @@ func (a *Analyzer) buildOccurrenceMap(results []models.ScanResult) map[string]*V
 				occurrences[key] = &VulnerabilityOccurrence{
 					Vulnerability: vuln,
 					Scanners:      []string{result.Scanner},
+					ScannerSet:    map[string]struct{}{result.Scanner: {}},
 					Count:         1,
 				}
 			}
@@ -224,6 +244,13 @@ type ConfidenceScore struct {
 
 // CalculateConfidence determines confidence level for a vulnerability.
 func (a *Analyzer) CalculateConfidence(occ *VulnerabilityOccurrence, totalScanners int) ConfidenceScore {
+	if totalScanners == 0 {
+		return ConfidenceScore{
+			Level:      models.ConfidenceLow,
+			Scanners:   occ.Scanners,
+			Percentage: 0,
+		}
+	}
 	percentage := float64(occ.Count) / float64(totalScanners) * 100
 
 	var level models.ConfidenceLevel
