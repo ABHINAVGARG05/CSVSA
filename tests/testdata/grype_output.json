@@ -1,0 +1,145 @@
+{
+  "matches": [
+    {
+      "vulnerability": {
+        "id": "CVE-2023-5363",
+        "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2023-5363",
+        "namespace": "nvd:cpe",
+        "severity": "High",
+        "urls": [
+          "https://nvd.nist.gov/vuln/detail/CVE-2023-5363",
+          "https://www.openssl.org/news/secadv/20231024.txt"
+        ],
+        "description": "Issue summary: A bug has been identified in the processing of key and nonce lengths used with AES-SIV encryption.",
+        "cvss": [
+          {
+            "version": "3.1",
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "metrics": {
+              "baseScore": 7.5,
+              "exploitabilityScore": 3.9,
+              "impactScore": 3.6
+            }
+          }
+        ],
+        "fix": {
+          "versions": ["3.1.4-r0"],
+          "state": "fixed"
+        }
+      },
+      "relatedVulnerabilities": [],
+      "matchDetails": [
+        {
+          "type": "exact-direct-match",
+          "matcher": "apk-matcher",
+          "searchedBy": {
+            "distro": {
+              "type": "alpine",
+              "version": "3.18.4"
+            },
+            "namespace": "alpine:distro:alpine:3.18",
+            "package": {
+              "name": "libssl3",
+              "version": "3.1.2-r0"
+            }
+          },
+          "found": {
+            "versionConstraint": "< 3.1.4-r0 (apk)"
+          }
+        }
+      ],
+      "artifact": {
+        "id": "4d7c7283ecb3d03b",
+        "name": "libssl3",
+        "version": "3.1.2-r0",
+        "type": "apk",
+        "locations": [
+          {
+            "path": "/lib/apk/db/installed",
+            "layerID": "sha256:78a822fe2a2d2c84f3de4a403188c45f623017d6a4521d23047c9fbb0801794c"
+          }
+        ],
+        "language": "",
+        "licenses": ["Apache-2.0"],
+        "cpes": ["cpe:2.3:a:openssl:openssl:3.1.2-r0:*:*:*:*:*:*:*"],
+        "purl": "pkg:apk/alpine/libssl3@3.1.2-r0?arch=x86_64&distro=alpine-3.18.4"
+      }
+    },
+    {
+      "vulnerability": {
+        "id": "CVE-2023-5678",
+        "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2023-5678",
+        "namespace": "nvd:cpe",
+        "severity": "Medium",
+        "urls": [
+          "https://nvd.nist.gov/vuln/detail/CVE-2023-5678"
+        ],
+        "description": "Issue summary: Generating excessively long X9.42 DH keys or checking excessively long X9.42 DH keys or parameters may be very slow.",
+        "cvss": [],
+        "fix": {
+          "versions": ["3.1.4-r1"],
+          "state": "fixed"
+        }
+      },
+      "relatedVulnerabilities": [],
+      "matchDetails": [],
+      "artifact": {
+        "id": "abc123",
+        "name": "libcrypto3",
+        "version": "3.1.2-r0",
+        "type": "apk",
+        "locations": [],
+        "language": "",
+        "licenses": [],
+        "cpes": [],
+        "purl": ""
+      }
+    },
+    {
+      "vulnerability": {
+        "id": "CVE-2023-44487",
+        "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2023-44487",
+        "namespace": "nvd:cpe",
+        "severity": "Critical",
+        "urls": [
+          "https://nvd.nist.gov/vuln/detail/CVE-2023-44487"
+        ],
+        "description": "The HTTP/2 protocol allows a denial of service (server resource consumption) because request cancellation can reset many streams quickly.",
+        "cvss": [],
+        "fix": {
+          "versions": ["1.58.3-r0"],
+          "state": "fixed"
+        }
+      },
+      "relatedVulnerabilities": [],
+      "matchDetails": [],
+      "artifact": {
+        "id": "def456",
+        "name": "nghttp2-libs",
+        "version": "1.57.0-r0",
+        "type": "apk",
+        "locations": [],
+        "language": "",
+        "licenses": [],
+        "cpes": [],
+        "purl": ""
+      }
+    }
+  ],
+  "source": {
+    "type": "image",
+    "target": {
+      "userInput": "alpine:3.18",
+      "imageID": "sha256:c1aabb73d2339c5ebaa3681de2e9d9c18d57485045a4e311d9f8004bec208d67"
+    }
+  },
+  "distro": {
+    "name": "alpine",
+    "version": "3.18.4",
+    "idLike": []
+  },
+  "descriptor": {
+    "name": "grype",
+    "version": "0.74.0"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "alpine:3.18",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.18.4"
+    },
+    "ImageID": "sha256:c1aabb73d2339c5ebaa3681de2e9d9c18d57485045a4e311d9f8004bec208d67",
+    "ImageConfig": {
+      "architecture": "amd64",
+      "os": "linux"
+    }
+  },
+  "Results": [
+    {
+      "Target": "alpine:3.18 (alpine 3.18.4)",
+      "Class": "os-pkgs",
+      "Type": "alpine",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2023-5363",
+          "PkgID": "libssl3@3.1.2-r0",
+          "PkgName": "libssl3",
+          "InstalledVersion": "3.1.2-r0",
+          "FixedVersion": "3.1.4-r0",
+          "Status": "fixed",
+          "Layer": {
+            "Digest": "sha256:96526aa774ef0126ad0fe9e9a95764c5fc37f409ab9e97021e7b4775d82bf6fa",
+            "DiffID": "sha256:78a822fe2a2d2c84f3de4a403188c45f623017d6a4521d23047c9fbb0801794c"
+          },
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-5363",
+          "Title": "openssl: Incorrect cipher key and target length processing",
+          "Description": "Issue summary: A bug has been identified in the processing of key and nonce lengths used with AES-SIV encryption.",
+          "Severity": "HIGH",
+          "References": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-5363",
+            "https://www.openssl.org/news/secadv/20231024.txt"
+          ]
+        },
+        {
+          "VulnerabilityID": "CVE-2023-5678",
+          "PkgID": "libcrypto3@3.1.2-r0",
+          "PkgName": "libcrypto3",
+          "InstalledVersion": "3.1.2-r0",
+          "FixedVersion": "3.1.4-r1",
+          "Status": "fixed",
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-5678",
+          "Title": "openssl: Generating excessively long X9.42 DH keys",
+          "Description": "Issue summary: Generating excessively long X9.42 DH keys or checking excessively long X9.42 DH keys or parameters may be very slow.",
+          "Severity": "MEDIUM",
+          "References": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-5678"
+          ]
+        },
+        {
+          "VulnerabilityID": "CVE-2023-6129",
+          "PkgID": "libcrypto3@3.1.2-r0",
+          "PkgName": "libcrypto3",
+          "InstalledVersion": "3.1.2-r0",
+          "FixedVersion": "3.1.4-r3",
+          "Status": "fixed",
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-6129",
+          "Title": "openssl: POLY1305 MAC implementation corrupts vector registers on PowerPC",
+          "Description": "Issue summary: The POLY1305 MAC (message authentication code) implementation contains a bug that might corrupt the internal state.",
+          "Severity": "MEDIUM",
+          "References": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-6129"
+          ]
+        },
+        {
+          "VulnerabilityID": "CVE-2024-0727",
+          "PkgID": "libssl3@3.1.2-r0",
+          "PkgName": "libssl3",
+          "InstalledVersion": "3.1.2-r0",
+          "FixedVersion": "3.1.4-r5",
+          "Status": "fixed",
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-0727",
+          "Title": "openssl: denial of service via null dereference",
+          "Description": "Issue summary: Processing a maliciously formatted PKCS12 file may lead to OpenSSL crashing.",
+          "Severity": "LOW",
+          "References": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-0727"
+          ]
+        }
+      ]
+    }
+  ]
+}

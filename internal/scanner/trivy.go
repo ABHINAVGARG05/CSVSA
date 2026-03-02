@@ -243,3 +243,9 @@ func (t *TrivyScanner) IsAvailable() bool {
 	_, err := exec.LookPath(t.executablePath)
 	return err == nil
 }
+
+// ParseOutputForTest exposes the parseOutput method for integration testing.
+// This allows tests to verify JSON parsing without needing the actual scanner binary.
+func (t *TrivyScanner) ParseOutputForTest(data []byte) ([]models.Vulnerability, error) {
+	return t.parseOutput(data)
+}

@@ -294,3 +294,9 @@ func (g *GrypeScanner) IsAvailable() bool {
 	_, err := exec.LookPath(g.executablePath)
 	return err == nil
 }
+
+// ParseOutputForTest exposes the parseOutput method for integration testing.
+// This allows tests to verify JSON parsing without needing the actual scanner binary.
+func (g *GrypeScanner) ParseOutputForTest(data []byte) ([]models.Vulnerability, error) {
+	return g.parseOutput(data)
+}
