@@ -167,6 +167,10 @@ func (j *JSONGenerator) buildReport(result *models.ConsensusResult) JSONReport {
 func (j *JSONGenerator) convertVulnerabilities(vulns []models.Vulnerability) []VulnerabilityEntry {
 	entries := make([]VulnerabilityEntry, len(vulns))
 	for i, v := range vulns {
+		var scanners []string
+		if v.Scanner != "" {
+			scanners = []string{v.Scanner}
+		}
 		entries[i] = VulnerabilityEntry{
 			CVE:              v.CVE,
 			Package:          v.Package,
@@ -176,6 +180,7 @@ func (j *JSONGenerator) convertVulnerabilities(vulns []models.Vulnerability) []V
 			Title:            v.Title,
 			Description:      v.Description,
 			References:       v.References,
+			Scanners:         scanners,
 		}
 	}
 	return entries

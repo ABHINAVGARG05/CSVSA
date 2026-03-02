@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -68,10 +69,6 @@ type HTMLReportData struct {
 
 	// Scanner results
 	ScannerResults []HTMLScannerResult
-
-	// Chart data (for JavaScript)
-	SeverityChartData string
-	ScannerChartData  string
 }
 
 // HTMLVulnerability is a vulnerability formatted for HTML display.
@@ -118,10 +115,23 @@ func (h *HTMLGenerator) Generate(result *models.ConsensusResult, w io.Writer) er
 		},
 	}
 
-	tmpl, err := template.New("report").Funcs(funcMap).Parse(htmlTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to parse template: %w", err)
-	}
+    templateSource := htmlTemplate
+    if h.templatePath != "" {
+        contents, err := os.ReadFile(h.templatePath)
+        if err != nil {
+            return fmt.Errorf("failed to read custom template %s: %w", h.templatePath, err)
+        }
+        templateSource = string(contents)
+    }
+
+    tmpl, err := template.New("report").Funcs(funcMap).Parse(templateSource)
+    if err != nil && templateSource != htmlTemplate {
+        fmt.Fprintf(os.Stderr, "warning: failed to parse custom template %s: %v; falling back to embedded template\n", h.templatePath, err)
+        tmpl, err = template.New("report").Funcs(funcMap).Parse(htmlTemplate)
+    }
+    if err != nil {
+        return fmt.Errorf("failed to parse template: %w", err)
+    }
 
 	return tmpl.Execute(w, data)
 }
@@ -183,10 +193,6 @@ func (h *HTMLGenerator) buildReportData(result *models.ConsensusResult) HTMLRepo
 		AllVulns:       h.convertVulnerabilities(result.AllVulnerabilities),
 		ScannerResults: h.convertScannerResults(result.ScanResults),
 	}
-
-	// Build chart data
-	data.SeverityChartData = fmt.Sprintf("[%d, %d, %d, %d, %d]",
-		data.CriticalCount, data.HighCount, data.MediumCount, data.LowCount, data.UnknownCount)
 
 	return data
 }

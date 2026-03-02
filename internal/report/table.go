@@ -4,6 +4,7 @@ package report
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/ABHINAVGARG05/CSVSA/internal/models"
@@ -49,7 +50,16 @@ func (t *TableGenerator) Generate(result *models.ConsensusResult, w io.Writer) e
 	}
 
 	// Print unique findings per scanner
-	for scanner, vulns := range result.UniqueFindings {
+	// Sort scanner names for consistent output order
+	scannerNames := make([]string, 0, len(result.UniqueFindings))
+	for scanner := range result.UniqueFindings {
+		scannerNames = append(scannerNames, scanner)
+	}
+	sort.Strings(scannerNames)
+
+	// Print unique findings per scanner
+	for _, scanner := range scannerNames {
+		vulns := result.UniqueFindings[scanner]
 		if len(vulns) > 0 {
 			title := fmt.Sprintf("UNIQUE TO %s (Not found by other scanners)", strings.ToUpper(scanner))
 			t.printSection(w, title, vulns)
@@ -162,9 +172,10 @@ func (t *TableGenerator) printSeverityDistribution(w io.Writer, result *models.C
 		total := dist[sev]
 		consensus := consensusDist[sev]
 		bar := t.makeBar(total, maxCount, 20)
+		paddedSeverity := fmt.Sprintf("%-12s", t.formatSeverityRaw(sev))
 
 		fmt.Fprintf(w, "  %-12s │ %-8d │ %-10d │ %s\n",
-			t.formatSeverity(sev),
+			t.colorizeInPlace(sev, paddedSeverity),
 			total,
 			consensus,
 			bar,
@@ -191,6 +202,29 @@ func (t *TableGenerator) formatSeverity(sev models.Severity) string {
 		return color.New(color.FgGreen).Sprint("LOW")
 	default:
 		return color.New(color.FgWhite).Sprint("UNKNOWN")
+	}
+}
+
+func (t *TableGenerator) formatSeverityRaw(sev models.Severity) string {
+	return string(sev)
+}
+
+func (t *TableGenerator) colorizeInPlace(sev models.Severity, padded string) string {
+	if !t.colorEnabled {
+		return padded
+	}
+
+	switch sev {
+	case models.SeverityCritical:
+		return color.New(color.FgRed, color.Bold).Sprint(padded)
+	case models.SeverityHigh:
+		return color.New(color.FgRed).Sprint(padded)
+	case models.SeverityMedium:
+		return color.New(color.FgYellow).Sprint(padded)
+	case models.SeverityLow:
+		return color.New(color.FgGreen).Sprint(padded)
+	default:
+		return color.New(color.FgWhite).Sprint(padded)
 	}
 }
 
