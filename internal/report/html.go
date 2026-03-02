@@ -266,7 +266,28 @@ var htmlTemplate = strings.TrimSpace(`
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-base: #1e1f22;     
+            --bg-surface: #2b2d30;   
+            --bg-hover: #393b40;
+            --border-color: #393b40;
+            --text-main: #bcbec4;
+            --text-muted: #868a91;
+            --accent: #56a8f5;     
+            
+            /* Severity Colors - adjusted for dark mode contrast */
+            --color-critical: #f75464;
+            --color-high: #e2753a;
+            --color-medium: #dfa12b;
+            --color-low: #62b543;
+            --color-consensus: #56a8f5;
+            --color-overlap: #9d88cc;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -274,11 +295,13 @@ var htmlTemplate = strings.TrimSpace(`
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e4e4e4;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--bg-base);
+            color: var(--text-main);
             min-height: 100vh;
             padding: 2rem;
+            line-height: 1.5;
+            font-size: 14px;
         }
         
         .container {
@@ -287,175 +310,159 @@ var htmlTemplate = strings.TrimSpace(`
         }
         
         header {
-            text-align: center;
             margin-bottom: 2rem;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-titles {
+            flex: 1;
         }
         
         h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, #00d9ff, #00ff88);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.5px;
         }
         
         .subtitle {
-            color: #888;
-            font-size: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
         
         .meta-info {
             display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .meta-item {
-            background: rgba(0, 217, 255, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            background: var(--bg-surface);
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
         }
         
         .meta-item strong {
-            color: #00d9ff;
+            color: var(--text-muted);
+            font-weight: normal;
+            margin-right: 0.25rem;
+        }
+
+        .meta-item {
+            color: var(--accent);
         }
         
         .dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            gap: 1rem;
             margin-bottom: 2rem;
         }
         
+        /* Update the .stat-card class to reduce side padding from 1.5rem to 1rem */
         .stat-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
-            padding: 1.5rem;
+            /* Reduced horizontal padding to give more room for text */
+            padding: 1.5rem 1rem;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 32px rgba(0, 217, 255, 0.2);
-        }
-        
+
         .stat-value {
-            font-size: 2.5rem;
+            /* Changed from 2.5rem to a smaller size, for example 1.8rem */
+            font-size: 1.8rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
+            /* This will force long unbreakable strings to break instead of cutting off */
+            overflow-wrap: break-word;
         }
+        
+        .stat-card.critical { border-top-color: var(--color-critical); }
+        .stat-card.high { border-top-color: var(--color-high); }
+        .stat-card.medium { border-top-color: var(--color-medium); }
+        .stat-card.low { border-top-color: var(--color-low); }
+        .stat-card.consensus { border-top-color: var(--color-consensus); }
+        .stat-card.overlap { border-top-color: var(--color-overlap); }
+        
+        
         
         .stat-label {
-            color: #888;
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
         }
         
-        .stat-card.critical .stat-value { color: #ff4757; }
-        .stat-card.high .stat-value { color: #ff6b6b; }
-        .stat-card.medium .stat-value { color: #ffa502; }
-        .stat-card.low .stat-value { color: #2ed573; }
-        .stat-card.consensus .stat-value { color: #00d9ff; }
-        .stat-card.overlap .stat-value { color: #00ff88; }
-        
         .section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
         }
         
         .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid rgba(0, 217, 255, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .section-title::before {
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: linear-gradient(180deg, #00d9ff, #00ff88);
-            border-radius: 2px;
+            font-size: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #ffffff;
+            font-weight: 500;
+            background: rgba(0,0,0,0.1);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         
         th, td {
-            padding: 1rem;
+            padding: 0.75rem 1.25rem;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
         }
         
         th {
-            background: rgba(0, 217, 255, 0.1);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
         }
         
-        tr:hover {
-            background: rgba(255, 255, 255, 0.03);
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 500;
         }
         
         .severity-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
+            border: 1px solid transparent;
         }
         
-        .severity-critical {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
-            border: 1px solid #ff4757;
-        }
-        
-        .severity-high {
-            background: rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-            border: 1px solid #ff6b6b;
-        }
-        
-        .severity-medium {
-            background: rgba(255, 165, 2, 0.2);
-            color: #ffa502;
-            border: 1px solid #ffa502;
-        }
-        
-        .severity-low {
-            background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
-            border: 1px solid #2ed573;
-        }
-        
-        .severity-unknown {
-            background: rgba(128, 128, 128, 0.2);
-            color: #888;
-            border: 1px solid #888;
-        }
+        .severity-critical { color: var(--color-critical); border-color: rgba(247, 84, 100, 0.3); background: rgba(247, 84, 100, 0.1); }
+        .severity-high { color: var(--color-high); border-color: rgba(226, 117, 58, 0.3); background: rgba(226, 117, 58, 0.1); }
+        .severity-medium { color: var(--color-medium); border-color: rgba(223, 161, 43, 0.3); background: rgba(223, 161, 43, 0.1); }
+        .severity-low { color: var(--color-low); border-color: rgba(98, 181, 67, 0.3); background: rgba(98, 181, 67, 0.1); }
+        .severity-unknown { color: var(--text-muted); border-color: var(--border-color); background: rgba(255, 255, 255, 0.05); }
         
         .scanner-status {
             display: inline-flex;
@@ -464,20 +471,19 @@ var htmlTemplate = strings.TrimSpace(`
         }
         
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
         }
         
-        .status-dot.success { background: #2ed573; }
-        .status-dot.failure { background: #ff4757; }
+        .status-dot.success { background: var(--color-low); }
+        .status-dot.failure { background: var(--color-critical); }
         
         .severity-chart {
             display: flex;
-            justify-content: center;
-            gap: 2rem;
-            padding: 1rem 0;
-            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 2rem;
+            gap: 1rem;
         }
         
         .chart-bar {
@@ -485,53 +491,57 @@ var htmlTemplate = strings.TrimSpace(`
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
+            flex: 1;
+            max-width: 80px;
         }
         
         .bar-container {
-            width: 60px;
-            height: 150px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
             display: flex;
             align-items: flex-end;
-            overflow: hidden;
         }
         
         .bar-fill {
             width: 100%;
-            border-radius: 8px 8px 0 0;
-            transition: height 0.5s ease;
+            min-height: 2px;
         }
         
         .bar-label {
             font-size: 0.75rem;
-            color: #888;
+            color: var(--text-muted);
             text-transform: uppercase;
         }
         
         .bar-value {
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
         
         .no-vulns {
-            text-align: center;
             padding: 2rem;
-            color: #888;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
         }
         
         footer {
-            text-align: center;
-            margin-top: 2rem;
-            padding: 1rem;
-            color: #666;
-            font-size: 0.85rem;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
         }
         
         @media (max-width: 768px) {
             body { padding: 1rem; }
-            h1 { font-size: 1.8rem; }
-            .meta-info { flex-direction: column; gap: 0.5rem; }
-            table { font-size: 0.8rem; }
+            header { flex-direction: column; align-items: flex-start; }
+            .meta-info { flex-direction: column; gap: 0.25rem; width: 100%; }
+            .severity-chart { padding: 1rem; }
             th, td { padding: 0.5rem; }
         }
     </style>
@@ -539,19 +549,21 @@ var htmlTemplate = strings.TrimSpace(`
 <body>
     <div class="container">
         <header>
-            <h1>CSVSA</h1>
-            <p class="subtitle">Container Security Vulnerability Scanner Analyzer</p>
+            <div class="header-titles">
+                <h1>CSVSA Report</h1>
+                <p class="subtitle">Container Security Vulnerability Scanner Analyzer</p>
+            </div>
             <div class="meta-info">
-                <span class="meta-item"><strong>Target:</strong> {{.Target}}</span>
-                <span class="meta-item"><strong>Scanners:</strong> {{range $i, $s := .Scanners}}{{if $i}}, {{end}}{{$s}}{{end}}</span>
-                <span class="meta-item"><strong>Duration:</strong> {{.TotalDuration}}</span>
+                <span class="meta-item"><strong>TARGET:</strong>{{.Target}}</span>
+                <span class="meta-item"><strong>SCANNERS:</strong>{{range $i, $s := .Scanners}}{{if $i}}, {{end}}{{$s}}{{end}}</span>
+                <span class="meta-item"><strong>DURATION:</strong>{{.TotalDuration}}</span>
             </div>
         </header>
         
         <div class="dashboard">
             <div class="stat-card">
                 <div class="stat-value">{{.TotalVulnerabilities}}</div>
-                <div class="stat-label">Total Vulnerabilities</div>
+                <div class="stat-label">Total Vulns</div>
             </div>
             <div class="stat-card consensus">
                 <div class="stat-value">{{.ConsensusCount}}</div>
@@ -562,15 +574,15 @@ var htmlTemplate = strings.TrimSpace(`
                 <div class="stat-label">Scanner Agreement</div>
             </div>
             <div class="stat-card critical">
-                <div class="stat-value">{{.CriticalCount}}</div>
+                <div class="stat-value" style="color: var(--color-critical);">{{.CriticalCount}}</div>
                 <div class="stat-label">Critical</div>
             </div>
             <div class="stat-card high">
-                <div class="stat-value">{{.HighCount}}</div>
+                <div class="stat-value" style="color: var(--color-high);">{{.HighCount}}</div>
                 <div class="stat-label">High</div>
             </div>
             <div class="stat-card medium">
-                <div class="stat-value">{{.MediumCount}}</div>
+                <div class="stat-value" style="color: var(--color-medium);">{{.MediumCount}}</div>
                 <div class="stat-label">Medium</div>
             </div>
         </div>
@@ -579,30 +591,30 @@ var htmlTemplate = strings.TrimSpace(`
             <h2 class="section-title">Severity Distribution</h2>
             <div class="severity-chart">
                 <div class="chart-bar">
-                    <div class="bar-value severity-critical">{{.CriticalCount}}</div>
+                    <div class="bar-value" style="color: var(--color-critical);">{{.CriticalCount}}</div>
                     <div class="bar-container">
-                        <div class="bar-fill severity-critical" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .CriticalCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: #ff4757;"></div>
+                        <div class="bar-fill" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .CriticalCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: var(--color-critical);"></div>
                     </div>
                     <div class="bar-label">Critical</div>
                 </div>
                 <div class="chart-bar">
-                    <div class="bar-value severity-high">{{.HighCount}}</div>
+                    <div class="bar-value" style="color: var(--color-high);">{{.HighCount}}</div>
                     <div class="bar-container">
-                        <div class="bar-fill severity-high" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .HighCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: #ff6b6b;"></div>
+                        <div class="bar-fill" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .HighCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: var(--color-high);"></div>
                     </div>
                     <div class="bar-label">High</div>
                 </div>
                 <div class="chart-bar">
-                    <div class="bar-value severity-medium">{{.MediumCount}}</div>
+                    <div class="bar-value" style="color: var(--color-medium);">{{.MediumCount}}</div>
                     <div class="bar-container">
-                        <div class="bar-fill severity-medium" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .MediumCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: #ffa502;"></div>
+                        <div class="bar-fill" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .MediumCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: var(--color-medium);"></div>
                     </div>
                     <div class="bar-label">Medium</div>
                 </div>
                 <div class="chart-bar">
-                    <div class="bar-value severity-low">{{.LowCount}}</div>
+                    <div class="bar-value" style="color: var(--color-low);">{{.LowCount}}</div>
                     <div class="bar-container">
-                        <div class="bar-fill severity-low" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .LowCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: #2ed573;"></div>
+                        <div class="bar-fill" style="height: {{if .TotalVulnerabilities}}{{printf "%.0f" (divf (mulf .LowCount 100.0) .TotalVulnerabilities)}}%{{else}}0%{{end}}; background: var(--color-low);"></div>
                     </div>
                     <div class="bar-label">Low</div>
                 </div>
@@ -614,10 +626,10 @@ var htmlTemplate = strings.TrimSpace(`
             <table>
                 <thead>
                     <tr>
-                        <th>Scanner</th>
-                        <th>Status</th>
-                        <th>Vulnerabilities</th>
-                        <th>Duration</th>
+                        <th>SCANNER</th>
+                        <th>STATUS</th>
+                        <th>VULNERABILITIES</th>
+                        <th>DURATION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -645,10 +657,10 @@ var htmlTemplate = strings.TrimSpace(`
                 <thead>
                     <tr>
                         <th>CVE</th>
-                        <th>Package</th>
-                        <th>Installed</th>
-                        <th>Fixed</th>
-                        <th>Severity</th>
+                        <th>PACKAGE</th>
+                        <th>INSTALLED</th>
+                        <th>FIXED</th>
+                        <th>SEVERITY</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -676,10 +688,10 @@ var htmlTemplate = strings.TrimSpace(`
                 <thead>
                     <tr>
                         <th>CVE</th>
-                        <th>Package</th>
-                        <th>Installed</th>
-                        <th>Fixed</th>
-                        <th>Severity</th>
+                        <th>PACKAGE</th>
+                        <th>INSTALLED</th>
+                        <th>FIXED</th>
+                        <th>SEVERITY</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -699,8 +711,8 @@ var htmlTemplate = strings.TrimSpace(`
         {{end}}
         
         <footer>
-            <p>Generated by CSVSA - Container Security Vulnerability Scanner Analyzer</p>
-            <p>Analysis performed at {{.AnalysisTime}}</p>
+            <span>CSVSA Generator</span>
+            <span>Analysis performed at {{.AnalysisTime}}</span>
         </footer>
     </div>
 </body>
