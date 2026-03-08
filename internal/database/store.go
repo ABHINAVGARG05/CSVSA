@@ -1,4 +1,3 @@
-// Package database provides SQLite persistence for CSVSA scan results.
 package database
 
 import (
@@ -8,18 +7,13 @@ import (
 	"github.com/ABHINAVGARG05/CSVSA/internal/models"
 )
 
-// ConsensusType represents the level of scanner agreement for a finding.
+// ConsensusType represents the level of scanner agreement.
 type ConsensusType string
 
 const (
-	// ConsensusTypeConsensus indicates all scanners found this vulnerability.
 	ConsensusTypeConsensus ConsensusType = "consensus"
-
-	// ConsensusTypePartial indicates some but not all scanners found this vulnerability.
-	ConsensusTypePartial ConsensusType = "partial"
-
-	// ConsensusTypeUnique indicates only one scanner found this vulnerability.
-	ConsensusTypeUnique ConsensusType = "unique"
+	ConsensusTypePartial   ConsensusType = "partial"
+	ConsensusTypeUnique    ConsensusType = "unique"
 )
 
 // Image represents a scanned container image record.
@@ -42,7 +36,7 @@ type VulnerabilityRecord struct {
 	Description  string          `json:"description,omitempty"`
 }
 
-// ScannerFinding represents a relationship between an image, vulnerability, and scanner.
+// ScannerFinding links an image, vulnerability, and scanner.
 type ScannerFinding struct {
 	ID              int64         `json:"id"`
 	ImageID         int64         `json:"image_id"`
@@ -52,7 +46,7 @@ type ScannerFinding struct {
 	FoundAt         time.Time     `json:"found_at"`
 }
 
-// EPSSScore represents an EPSS (Exploit Prediction Scoring System) score.
+// EPSSScore represents an EPSS score for a CVE.
 type EPSSScore struct {
 	CVEID       string    `json:"cve_id"`
 	EPSSScore   float64   `json:"epss_score"`
@@ -60,20 +54,7 @@ type EPSSScore struct {
 	FetchedDate time.Time `json:"fetched_date"`
 }
 
-// ScanMetadata represents statistical metadata about a scan.
-type ScanMetadata struct {
-	ID                   int64   `json:"id"`
-	ImageID              int64   `json:"image_id"`
-	TotalVulnerabilities int     `json:"total_vulnerabilities"`
-	ConsensusCount       int     `json:"consensus_count"`
-	PartialCount         int     `json:"partial_count"`
-	UniqueCount          int     `json:"unique_count"`
-	OverlapPercentage    float64 `json:"overlap_percentage"`
-	ScannersUsed         string  `json:"scanners_used"`
-	ScanDurationMs       int64   `json:"scan_duration_ms"`
-}
-
-// FindingWithDetails combines a scanner finding with vulnerability details.
+// FindingWithDetails combines finding with vulnerability and EPSS data.
 type FindingWithDetails struct {
 	ScannerFinding
 	Vulnerability VulnerabilityRecord `json:"vulnerability"`
@@ -82,50 +63,35 @@ type FindingWithDetails struct {
 }
 
 // Store defines the interface for database operations.
-// This interface enables dependency injection and testing with mocks.
 type Store interface {
 	// Image operations
 	CreateImage(ctx context.Context, name, category string) (*Image, error)
 	GetImage(ctx context.Context, id int64) (*Image, error)
 	GetImageByName(ctx context.Context, name string) (*Image, error)
-	GetImagesByCategory(ctx context.Context, category string) ([]Image, error)
 	ListImages(ctx context.Context) ([]Image, error)
-	DeleteImage(ctx context.Context, id int64) error
 
 	// Vulnerability operations
 	UpsertVulnerability(ctx context.Context, vuln *VulnerabilityRecord) (*VulnerabilityRecord, error)
 	GetVulnerability(ctx context.Context, cveID, pkg, version string) (*VulnerabilityRecord, error)
-	GetVulnerabilityByID(ctx context.Context, id int64) (*VulnerabilityRecord, error)
-	ListVulnerabilities(ctx context.Context) ([]VulnerabilityRecord, error)
-	GetVulnerabilitiesBySeverity(ctx context.Context, severity models.Severity) ([]VulnerabilityRecord, error)
 
 	// Scanner finding operations
 	CreateScannerFinding(ctx context.Context, finding *ScannerFinding) error
 	GetFindingsForImage(ctx context.Context, imageID int64) ([]ScannerFinding, error)
-	GetFindingsForVulnerability(ctx context.Context, vulnID int64) ([]ScannerFinding, error)
-	GetFindingsByConsensusType(ctx context.Context, consensusType ConsensusType) ([]ScannerFinding, error)
 	GetFindingsWithDetails(ctx context.Context, imageID int64) ([]FindingWithDetails, error)
 
-	// EPSS score operations
+	// EPSS operations
 	UpsertEPSSScore(ctx context.Context, score *EPSSScore) error
 	GetEPSSScore(ctx context.Context, cveID string) (*EPSSScore, error)
-	GetEPSSScores(ctx context.Context, cveIDs []string) (map[string]*EPSSScore, error)
 	GetCachedCVEs(ctx context.Context, cveIDs []string) ([]string, error)
 	BulkUpsertEPSSScores(ctx context.Context, scores []EPSSScore) error
 
-	// Scan metadata operations
-	UpsertScanMetadata(ctx context.Context, meta *ScanMetadata) error
-	GetScanMetadata(ctx context.Context, imageID int64) (*ScanMetadata, error)
-
-	// Bulk operations for scan persistence
+	// Bulk persist after scan
 	PersistScanResults(ctx context.Context, imageName, category string, result *models.ConsensusResult) (*Image, error)
 
-	// Query operations for analysis
+	// Analysis queries
 	GetAllFindingsWithEPSS(ctx context.Context) ([]FindingWithDetails, error)
-	GetFindingsByCategory(ctx context.Context, category string) ([]FindingWithDetails, error)
-	GetAgreementStats(ctx context.Context) (map[string]map[models.Severity]float64, error)
 
-	// Database management
+	// Management
 	Close() error
 	Ping(ctx context.Context) error
 }
