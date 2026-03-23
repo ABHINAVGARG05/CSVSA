@@ -24,10 +24,30 @@ import (
 )
 
 var (
-	Version   = "1.0.0"
-	BuildDate = "unknown"
-	GitCommit = "unknown"
+    Version   = "dev"
+    BuildDate = "unknown"
+    GitCommit = "unknown"
 )
+
+func init() {
+    if info, ok := debug.ReadBuildInfo(); ok {
+        if info.Main.Version != "" && info.Main.Version != "(devel)" {
+            Version = info.Main.Version
+        }
+        for _, s := range info.Settings {
+            switch s.Key {
+            case "vcs.revision":
+                if len(s.Value) > 7 {
+                    GitCommit = s.Value[:7]
+                } else {
+                    GitCommit = s.Value
+                }
+            case "vcs.time":
+                BuildDate = s.Value
+            }
+        }
+    }
+}
 
 const (
 	ExitSuccess              = 0
@@ -91,7 +111,7 @@ Examples:
   csvsa alpine:3.18 --db --epss --analyze
   csvsa alpine:3.18 --db --category production --chart severity.png --html report.html`,
 		Args:    cobra.MaximumNArgs(1),
-		Version: fmt.Sprintf("%s (built %s, commit %s)", Version, BuildDate, GitCommit),
+        Version: fmt.Sprintf("%s (built %s, commit %s)", Version, BuildDate, GitCommit),
 		RunE:    c.runScan,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if c.config.NoColor {
