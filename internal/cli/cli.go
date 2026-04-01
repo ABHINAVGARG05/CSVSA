@@ -210,15 +210,16 @@
 		ctx, cancel := c.setupContext()
 		defer cancel()
 
-		registry := scanner.DefaultRegistry()
+		registry := scanner.SmartRegistry()
 		scanConfig := c.buildScanConfig(target)
 		Orchestrator := scanner.NewOrchestrator(registry, scanConfig)
 
 		available := registry.GetAvailable()
 		if len(available) == 0 {
-			return fmt.Errorf("no scanners available. Please install trivy or grype")
+			return fmt.Errorf("no scanners available. Install trivy/grype locally, or install Docker to run them automatically via containers")
 		}
 		if c.config.Verbose {
+			fmt.Printf("Scanner sources: %s\n", scanner.DescribeRegistry(registry))
 			c.printScanStart(target, available)
 		}
 
@@ -543,7 +544,7 @@
 
 	func (c *CLI) runScanners(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		registry := scanner.DefaultRegistry()
+		registry := scanner.SmartRegistry()
 		fmt.Println("\nAvailable Scanners:")
 		fmt.Println("───────────────────────────────────────────")
 		for _, s := range registry.GetAll() {
