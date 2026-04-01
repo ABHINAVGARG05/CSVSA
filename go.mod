@@ -2,7 +2,12 @@ module github.com/ABHINAVGARG05/CSVSA
 
 go 1.25.0
 
-require github.com/fatih/color v1.18.0
+require (
+	github.com/fatih/color v1.18.0
+	github.com/spf13/cobra v1.10.2
+	gonum.org/v1/plot v0.16.0
+	modernc.org/sqlite v1.46.1
+)
 
 require (
 	codeberg.org/go-fonts/liberation v0.5.0 // indirect
@@ -20,15 +25,12 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/image v0.25.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	gonum.org/v1/plot v0.16.0 // indirect
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.46.1 // indirect
 )

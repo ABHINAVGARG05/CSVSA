@@ -63,6 +63,8 @@ type Vulnerability struct {
 	// Example: "CVE-2021-44228"
 	CVE string `json:"cve"`
 
+	CVEID string  `json:"cve_id"`
+
 	// Package is the name of the affected software package.
 	// Example: "log4j-core"
 	Package string `json:"package"`
@@ -82,6 +84,8 @@ type Vulnerability struct {
 	// Example: "trivy", "grype"
 	Scanner string `json:"scanner"`
 
+	Version string 	`json:"version"`
+
 	// Title is a brief description of the vulnerability.
 	Title string `json:"title,omitempty"`
 
@@ -90,6 +94,8 @@ type Vulnerability struct {
 
 	// References contains URLs to additional information.
 	References []string `json:"references,omitempty"`
+
+	KEV *KEVInfo `json:"kev"`
 }
 
 // Key generates a unique identifier for this vulnerability.
@@ -105,8 +111,18 @@ type ScanResult struct {
 	// Scanner identifies which scanner produced this result.
 	Scanner string `json:"scanner"`
 
+	Scanners [] string 	`json:"scanners"`
+
+	AnalysisTime string `json:"analysis_time"`
+
 	// Target is the image or filesystem that was scanned.
 	Target string `json:"target"`
+
+	Consensus       []Vulnerability `json:"consensus"`
+
+	UniqueFindings  map[string][]Vulnerability `json:"unique_findings"`
+
+	Statistics      Statistics      `json:"statistics"`
 
 	// Vulnerabilities is the list of detected vulnerabilities.
 	Vulnerabilities []Vulnerability `json:"vulnerabilities"`
@@ -169,6 +185,8 @@ type ConsensusResult struct {
 
 	// UniqueFindings maps scanner name to vulnerabilities only that scanner found.
 	UniqueFindings map[string][]Vulnerability `json:"unique_findings"`
+
+	Statistics Statistics `json:"statistics"`
 
 	// AllVulnerabilities contains the complete deduplicated list.
 	AllVulnerabilities []Vulnerability `json:"all_vulnerabilities"`

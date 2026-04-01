@@ -103,6 +103,9 @@ func (t *TableGenerator) printSummary(w io.Writer, result *models.ConsensusResul
 	fmt.Fprintf(w, "  %-30s │ %d\n", "Unique Findings", totalUnique)
 	fmt.Fprintf(w, "  %-30s │ %.1f%%\n", "Scanner Agreement", result.OverlapPercentage)
 	fmt.Fprintf(w, "  %-30s │ %d/%d\n", "Successful Scanners", successfulScanners, len(result.ScanResults))
+	if result.Statistics.KEVCount > 0 {
+		fmt.Fprintf(w, "  %-30s │ %d\n", "Actively Exploited (KEV)", result.Statistics.KEVCount)
+	}
 	fmt.Fprintln(w)
 }
 
@@ -118,9 +121,9 @@ func (t *TableGenerator) printSection(w io.Writer, title string, vulns []models.
 	}
 
 	// Print header
-	fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s\n",
-		"CVE", "PACKAGE", "VERSION", "FIXED", "SEVERITY")
-	fmt.Fprintln(w, "  "+strings.Repeat("─", 78))
+	fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
+		"CVE", "PACKAGE", "VERSION", "FIXED", "SEVERITY", "KEV")
+	fmt.Fprintln(w, "  "+strings.Repeat("─", 82))
 
 	for _, v := range vulns {
 		fixedVersion := v.FixedVersion
@@ -129,12 +132,21 @@ func (t *TableGenerator) printSection(w io.Writer, title string, vulns []models.
 		}
 
 		severityStr := t.formatSeverity(v.Severity)
-		fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %s\n",
+		kevFlag := "-"
+		if v.KEV != nil {
+			if v.KEV.IsKEV {
+				kevFlag = "🚨 YES"
+			} else {
+				kevFlag = "No"
+			}
+		}
+		fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
 			truncate(v.CVE, 18),
 			truncate(v.Package, 20),
 			truncate(v.InstalledVersion, 12),
 			truncate(fixedVersion, 12),
 			severityStr,
+			kevFlag,
 		)
 	}
 
@@ -260,4 +272,92 @@ func truncate(s string, maxLen int) string {
 		return s[:maxLen]
 	}
 	return s[:maxLen-3] + "..."
+}
+
+func printTable(result *models.ScanResult) {
+	width := 88
+	line := strings.Repeat("=", width)
+	dash := strings.Repeat("-", width)
+ 
+	fmt.Println(line)
+	fmt.Printf("%-88s\n", "  CSVSA - Vulnerability Consensus Report")
+	fmt.Println(line)
+	fmt.Printf("Target:        %s\n", result.Target)
+	fmt.Printf("Scanners:      %s\n", strings.Join(result.Scanners, ", "))
+	fmt.Printf("Analysis Time: %s\n", result.AnalysisTime)
+ 
+	if result.Statistics.KEVCount > 0 {
+		fmt.Println()
+		fmt.Printf("ACTIVELY EXPLOITED (CISA KEV): %d vulnerabilities\n", result.Statistics.KEVCount)
+		if result.Statistics.KEVConsensusCount > 0 {
+			fmt.Printf("   └─ %d confirmed by ALL scanners — patch immediately\n",
+				result.Statistics.KEVConsensusCount)
+		}
+	}
+ 
+	// Consensus section
+	fmt.Println()
+	fmt.Printf("CONSENSUS VULNERABILITIES (Found by ALL scanners)\n")
+	fmt.Println(dash)
+	fmt.Printf("%-20s %-15s %-12s %-10s %-14s %-6s\n",
+		"CVE", "PACKAGE", "VERSION", "SEVERITY", "FIXED VERSION", "KEV")
+	fmt.Println(dash)
+ 
+	for _, v := range result.Consensus {
+		kevFlag := ""
+		if v.KEV != nil && v.KEV.IsKEV {
+			kevFlag = "YES"
+		}
+ 
+		fmt.Printf("%-20s %-15s %-12s %-10s %-14s %-6s\n",
+			v.CVEID, v.Package, v.Version, v.Severity,
+			orDash(v.FixedVersion), kevFlag)
+ 
+		// Print KEV details inline for exploited vulns
+		if v.KEV != nil && v.KEV.IsKEV {
+			fmt.Printf("   ├─ Name:    %s\n", v.KEV.VulnerabilityName)
+			fmt.Printf("   ├─ Added:   %s  Due: %s\n", v.KEV.DateAdded, v.KEV.DueDate)
+			fmt.Printf("   └─ Action:  %s\n", v.KEV.RequiredAction)
+			fmt.Println()
+		}
+	}
+ 
+	for scanner, vulns := range result.UniqueFindings {
+		if len(vulns) == 0 {
+			continue
+		}
+		fmt.Println()
+		fmt.Printf("UNIQUE TO %s\n", strings.ToUpper(scanner))
+		fmt.Println(dash)
+		fmt.Printf("%-20s %-15s %-12s %-10s %-14s %-6s\n",
+			"CVE", "PACKAGE", "VERSION", "SEVERITY", "FIXED VERSION", "KEV")
+		fmt.Println(dash)
+ 
+		for _, v := range vulns {
+			kevFlag := ""
+			if v.KEV != nil && v.KEV.IsKEV {
+				kevFlag = "🚨 YES"
+			}
+			fmt.Printf("%-20s %-15s %-12s %-10s %-14s %-6s\n",
+				v.CVEID, v.Package, v.Version, v.Severity,
+				orDash(v.FixedVersion), kevFlag)
+		}
+	}
+ 
+	fmt.Println()
+	fmt.Printf("STATISTICS\n")
+	fmt.Println(dash)
+	fmt.Printf("Total Unique Vulnerabilities: %d\n", result.Statistics.TotalUnique)
+	fmt.Printf("Consensus Count:              %d\n", result.Statistics.ConsensusCount)
+	fmt.Printf("Overlap Percentage:           %.1f%%\n", result.Statistics.OverlapPercentage)
+	fmt.Printf("Actively Exploited (KEV):     %d\n", result.Statistics.KEVCount)
+	fmt.Printf("KEV in Consensus:             %d\n", result.Statistics.KEVConsensusCount)
+	fmt.Println(line)
+}
+ 
+func orDash(s string) string {
+	if s == "" {
+		return "-"
+	}
+	return s
 }
