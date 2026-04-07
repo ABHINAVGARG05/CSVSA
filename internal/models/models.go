@@ -96,6 +96,9 @@ type Vulnerability struct {
 	References []string `json:"references,omitempty"`
 
 	KEV *KEVInfo `json:"kev"`
+
+	EPSSScore      *float64 `json:"epss_score,omitempty"`
+	EPSSPercentile *float64 `json:"epss_percentile,omitempty"`
 }
 
 // Key generates a unique identifier for this vulnerability.

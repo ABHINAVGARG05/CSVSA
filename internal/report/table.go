@@ -1,4 +1,3 @@
-// Package report - Table format generator for CLI output
 package report
 
 import (
@@ -11,53 +10,42 @@ import (
 	"github.com/fatih/color"
 )
 
-// TableGenerator produces human-readable CLI table output.
 type TableGenerator struct {
-	// colorEnabled controls whether to use ANSI colors.
 	colorEnabled bool
 }
 
-// NewTableGenerator creates a new table generator.
 func NewTableGenerator() *TableGenerator {
 	return &TableGenerator{
 		colorEnabled: true,
 	}
 }
 
-// NewTableGeneratorWithOptions creates a table generator with custom options.
 func NewTableGeneratorWithOptions(colorEnabled bool) *TableGenerator {
 	return &TableGenerator{
 		colorEnabled: colorEnabled,
 	}
 }
 
-// Format returns the generator format name.
 func (t *TableGenerator) Format() string {
 	return "table"
 }
 
-// Generate produces a CLI table report.
 func (t *TableGenerator) Generate(result *models.ConsensusResult, w io.Writer) error {
-	// Print header
 	t.printHeader(w, result)
 
-	// Print summary statistics
 	t.printSummary(w, result)
 
-	// Print consensus vulnerabilities
 	if len(result.Consensus) > 0 {
 		t.printSection(w, "CONSENSUS VULNERABILITIES (Found by ALL scanners)", result.Consensus)
 	}
 
-	// Print unique findings per scanner
-	// Sort scanner names for consistent output order
+
 	scannerNames := make([]string, 0, len(result.UniqueFindings))
 	for scanner := range result.UniqueFindings {
 		scannerNames = append(scannerNames, scanner)
 	}
 	sort.Strings(scannerNames)
 
-	// Print unique findings per scanner
 	for _, scanner := range scannerNames {
 		vulns := result.UniqueFindings[scanner]
 		if len(vulns) > 0 {
@@ -66,13 +54,11 @@ func (t *TableGenerator) Generate(result *models.ConsensusResult, w io.Writer) e
 		}
 	}
 
-	// Print severity distribution
 	t.printSeverityDistribution(w, result)
 
 	return nil
 }
 
-// printHeader outputs the report header.
 func (t *TableGenerator) printHeader(w io.Writer, result *models.ConsensusResult) {
 	fmt.Fprintln(w)
 	t.printColored(w, color.FgCyan, "═══════════════════════════════════════════════════════════════════════════════")
@@ -85,12 +71,10 @@ func (t *TableGenerator) printHeader(w io.Writer, result *models.ConsensusResult
 	fmt.Fprintln(w)
 }
 
-// printSummary outputs summary statistics.
 func (t *TableGenerator) printSummary(w io.Writer, result *models.ConsensusResult) {
 	t.printColored(w, color.FgYellow, "SUMMARY")
 	t.printColored(w, color.FgYellow, "───────────────────────────────────────────────────────────────────────────────")
 
-	// Calculate metrics
 	successfulScanners := result.SuccessfulScanners()
 	totalUnique := 0
 	for _, vulns := range result.UniqueFindings {
@@ -120,10 +104,24 @@ func (t *TableGenerator) printSection(w io.Writer, title string, vulns []models.
 		return
 	}
 
-	// Print header
-	fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
-		"CVE", "PACKAGE", "VERSION", "FIXED", "SEVERITY", "KEV")
-	fmt.Fprintln(w, "  "+strings.Repeat("─", 82))
+	// Check if any vuln has EPSS data
+	hasEPSS := false
+	for _, v := range vulns {
+		if v.EPSSScore != nil {
+			hasEPSS = true
+			break
+		}
+	}
+
+	if hasEPSS {
+		fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s │ %-6s\n",
+			"CVE", "PACKAGE", "VERSION", "FIXED", "SEVERITY", "KEV", "EPSS")
+		fmt.Fprintln(w, "  "+strings.Repeat("─", 92))
+	} else {
+		fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
+			"CVE", "PACKAGE", "VERSION", "FIXED", "SEVERITY", "KEV")
+		fmt.Fprintln(w, "  "+strings.Repeat("─", 82))
+	}
 
 	for _, v := range vulns {
 		fixedVersion := v.FixedVersion
@@ -140,14 +138,31 @@ func (t *TableGenerator) printSection(w io.Writer, title string, vulns []models.
 				kevFlag = "No"
 			}
 		}
-		fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
-			truncate(v.CVE, 18),
-			truncate(v.Package, 20),
-			truncate(v.InstalledVersion, 12),
-			truncate(fixedVersion, 12),
-			severityStr,
-			kevFlag,
-		)
+
+		if hasEPSS {
+			epssStr := "-"
+			if v.EPSSScore != nil {
+				epssStr = fmt.Sprintf("%.2f%%", *v.EPSSScore*100)
+			}
+			fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s │ %-6s\n",
+				truncate(v.CVE, 18),
+				truncate(v.Package, 20),
+				truncate(v.InstalledVersion, 12),
+				truncate(fixedVersion, 12),
+				severityStr,
+				kevFlag,
+				epssStr,
+			)
+		} else {
+			fmt.Fprintf(w, "  %-18s │ %-20s │ %-12s │ %-12s │ %-10s │ %-6s\n",
+				truncate(v.CVE, 18),
+				truncate(v.Package, 20),
+				truncate(v.InstalledVersion, 12),
+				truncate(fixedVersion, 12),
+				severityStr,
+				kevFlag,
+			)
+		}
 	}
 
 	fmt.Fprintln(w)

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSVSA Vulnerability Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #1e1f22;     
+            --bg-surface: #2b2d30;   
+            --bg-hover: #393b40;
+            --border-color: #393b40;
+            --text-main: #bcbec4;
+            --text-muted: #868a91;
+            --accent: #56a8f5;     
+            
+             
+            --color-critical: #f75464;
+            --color-high: #e2753a;
+            --color-medium: #dfa12b;
+            --color-low: #62b543;
+            --color-consensus: #56a8f5;
+            --color-overlap: #9d88cc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-titles {
+            flex: 1;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .meta-info {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            background: var(--bg-surface);
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+        
+        .meta-item strong {
+            color: var(--text-muted);
+            font-weight: normal;
+            margin-right: 0.25rem;
+        }
+
+        .meta-item {
+            color: var(--accent);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+         
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+             
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-value {
+             
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+             
+            overflow-wrap: break-word;
+        }
+        
+        .stat-card.critical { border-top-color: var(--color-critical); }
+        .stat-card.high { border-top-color: var(--color-high); }
+        .stat-card.medium { border-top-color: var(--color-medium); }
+        .stat-card.low { border-top-color: var(--color-low); }
+        .stat-card.consensus { border-top-color: var(--color-consensus); }
+        .stat-card.overlap { border-top-color: var(--color-overlap); }
+        
+        
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #ffffff;
+            font-weight: 500;
+            background: rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        th, td {
+            padding: 0.75rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+        
+        .severity-critical { color: var(--color-critical); border-color: rgba(247, 84, 100, 0.3); background: rgba(247, 84, 100, 0.1); }
+        .severity-high { color: var(--color-high); border-color: rgba(226, 117, 58, 0.3); background: rgba(226, 117, 58, 0.1); }
+        .severity-medium { color: var(--color-medium); border-color: rgba(223, 161, 43, 0.3); background: rgba(223, 161, 43, 0.1); }
+        .severity-low { color: var(--color-low); border-color: rgba(98, 181, 67, 0.3); background: rgba(98, 181, 67, 0.1); }
+        .severity-unknown { color: var(--text-muted); border-color: var(--border-color); background: rgba(255, 255, 255, 0.05); }
+        
+        .scanner-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.success { background: var(--color-low); }
+        .status-dot.failure { background: var(--color-critical); }
+        
+        .severity-chart {
+            display: flex;
+            justify-content: space-around;
+            padding: 2rem;
+            gap: 1rem;
+        }
+        
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        .bar-container {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        .bar-fill {
+            width: 100%;
+            min-height: 2px;
+        }
+        
+        .bar-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .bar-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .no-vulns {
+            padding: 2rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+        }
+        
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            header { flex-direction: column; align-items: flex-start; }
+            .meta-info { flex-direction: column; gap: 0.25rem; width: 100%; }
+            .severity-chart { padding: 1rem; }
+            th, td { padding: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-titles">
+                <h1>CSVSA Report</h1>
+                <p class="subtitle">Container Security Vulnerability Scanner Analyzer</p>
+            </div>
+            <div class="meta-info">
+                <span class="meta-item"><strong>TARGET:</strong>alpine:3.18</span>
+                <span class="meta-item"><strong>SCANNERS:</strong>grype, trivy</span>
+                <span class="meta-item"><strong>DURATION:</strong>0s</span>
+            </div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-value">10</div>
+                <div class="stat-label">Total Vulns</div>
+            </div>
+            <div class="stat-card consensus">
+                <div class="stat-value">0</div>
+                <div class="stat-label">High Confidence</div>
+            </div>
+            <div class="stat-card overlap">
+                <div class="stat-value">0.0%</div>
+                <div class="stat-label">Scanner Agreement</div>
+            </div>
+            <div class="stat-card critical">
+                <div class="stat-value" style="color: var(--color-critical);">0</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-card high">
+                <div class="stat-value" style="color: var(--color-high);">0</div>
+                <div class="stat-label">High</div>
+            </div>
+            <div class="stat-card medium">
+                <div class="stat-value" style="color: var(--color-medium);">4</div>
+                <div class="stat-label">Medium</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">Severity Distribution</h2>
+            <div class="severity-chart">
+                <div class="chart-bar">
+                    <div class="bar-value" style="color: var(--color-critical);">0</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="height: 0%; background: var(--color-critical);"></div>
+                    </div>
+                    <div class="bar-label">Critical</div>
+                </div>
+                <div class="chart-bar">
+                    <div class="bar-value" style="color: var(--color-high);">0</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="height: 0%; background: var(--color-high);"></div>
+                    </div>
+                    <div class="bar-label">High</div>
+                </div>
+                <div class="chart-bar">
+                    <div class="bar-value" style="color: var(--color-medium);">4</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="height: 40%; background: var(--color-medium);"></div>
+                    </div>
+                    <div class="bar-label">Medium</div>
+                </div>
+                <div class="chart-bar">
+                    <div class="bar-value" style="color: var(--color-low);">6</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="height: 60%; background: var(--color-low);"></div>
+                    </div>
+                    <div class="bar-label">Low</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">Scanner Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>SCANNER</th>
+                        <th>STATUS</th>
+                        <th>VULNERABILITIES</th>
+                        <th>DURATION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td><strong>trivy</strong></td>
+                        <td>
+                            <span class="scanner-status">
+                                <span class="status-dot success"></span>
+                                Success
+                            </span>
+                        </td>
+                        <td>0</td>
+                        <td>9.449s</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>grype</strong></td>
+                        <td>
+                            <span class="scanner-status">
+                                <span class="status-dot success"></span>
+                                Success
+                            </span>
+                        </td>
+                        <td>10</td>
+                        <td>9.675s</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">Consensus Vulnerabilities (High Confidence)</h2>
+            
+            <p class="no-vulns">No consensus vulnerabilities found.</p>
+            
+        </div>
+        
+        
+        
+        <div class="section">
+            <h2 class="section-title">Unique to grype</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>CVE</th>
+                        <th>PACKAGE</th>
+                        <th>INSTALLED</th>
+                        <th>FIXED</th>
+                        <th>SEVERITY</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-60876</strong></td>
+                        <td>busybox-binsh</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-60876</strong></td>
+                        <td>ssl_client</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-60876</strong></td>
+                        <td>busybox</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2026-27171</strong></td>
+                        <td>zlib</td>
+                        <td>1.2.13-r1</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2024-58251</strong></td>
+                        <td>busybox-binsh</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2024-58251</strong></td>
+                        <td>ssl_client</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2024-58251</strong></td>
+                        <td>busybox</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-46394</strong></td>
+                        <td>busybox</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-46394</strong></td>
+                        <td>busybox-binsh</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CVE-2025-46394</strong></td>
+                        <td>ssl_client</td>
+                        <td>1.36.1-r7</td>
+                        <td>No fix available</td>
+                        <td><span class="severity-badge severity-low">LOW</span></td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+        
+        
+        
+        
+        
+        <footer>
+            <span>CSVSA Generator</span>
+            <span>Analysis performed at 2026-04-01T15:40:20&#43;05:30</span>
+        </footer>
+    </div>
+</body>
+</html>

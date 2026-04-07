@@ -62,7 +62,7 @@ func newScanCmd() *cobra.Command {
 
 			if !skipKEV {
 				if verbose {
-					fmt.Println("🔍 Fetching CISA KEV catalog...")
+					fmt.Println("Fetching CISA KEV catalog...")
 				}
 
 				kevClient := kev.NewClient()

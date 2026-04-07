@@ -279,8 +279,11 @@
 			epssScores, err = c.fetchEPSSScores(ctx, consensusResult, store)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: EPSS enrichment failed: %v\n", err)
-			} else if c.config.Verbose {
-				color.Green("EPSS scores fetched for %d CVEs\n", len(epssScores))
+			} else {
+				if c.config.Verbose {
+					color.Green("EPSS scores fetched for %d CVEs\n", len(epssScores))
+				}
+				enrichVulnsWithEPSS(consensusResult, epssScores)
 			}
 
 			if c.config.EPSSOutput != "" {
@@ -709,4 +712,24 @@
 			total += len(v)
 		}
 		return total
+	}
+
+	func enrichVulnsWithEPSS(result *models.ConsensusResult, scores map[string]epss.Score) {
+		stampEPSS := func(vulns []models.Vulnerability) {
+			for i := range vulns {
+				if s, ok := scores[vulns[i].CVE]; ok {
+					score := s.EPSS
+					pct := s.Percentile
+					vulns[i].EPSSScore = &score
+					vulns[i].EPSSPercentile = &pct
+				}
+			}
+		}
+
+		stampEPSS(result.Consensus)
+		stampEPSS(result.AllVulnerabilities)
+		for scanner, vulns := range result.UniqueFindings {
+			stampEPSS(vulns)
+			result.UniqueFindings[scanner] = vulns
+		}
 	}
