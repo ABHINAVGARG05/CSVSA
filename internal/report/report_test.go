@@ -3,6 +3,7 @@ package report
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -157,6 +158,54 @@ func TestHTMLGenerator(t *testing.T) {
 	}
 }
 
+func TestHTMLGeneratorWithTemplate(t *testing.T) {
+	file, err := os.CreateTemp("", "csvsa-template-*.html")
+	if err != nil {
+		t.Fatalf("CreateTemp failed: %v", err)
+	}
+	defer os.Remove(file.Name())
+	if _, err := file.WriteString("<html><body>{{.Target}}</body></html>"); err != nil {
+		t.Fatalf("WriteString failed: %v", err)
+	}
+	_ = file.Close()
+
+	gen := NewHTMLGeneratorWithTemplate(file.Name())
+	result := makeTestResult()
+
+	var buf bytes.Buffer
+	if err := gen.Generate(result, &buf); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	if !strings.Contains(buf.String(), "alpine:3.18") {
+		t.Error("custom template should include target")
+	}
+}
+
+func TestHTMLGeneratorBadTemplateFallback(t *testing.T) {
+	file, err := os.CreateTemp("", "csvsa-bad-template-*.html")
+	if err != nil {
+		t.Fatalf("CreateTemp failed: %v", err)
+	}
+	defer os.Remove(file.Name())
+	if _, err := file.WriteString("{{"); err != nil {
+		t.Fatalf("WriteString failed: %v", err)
+	}
+	_ = file.Close()
+
+	gen := NewHTMLGeneratorWithTemplate(file.Name())
+	result := makeTestResult()
+
+	var buf bytes.Buffer
+	if err := gen.Generate(result, &buf); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	if !strings.Contains(buf.String(), "<!DOCTYPE html>") {
+		t.Error("expected fallback to embedded template")
+	}
+}
+
 func TestTableGenerator(t *testing.T) {
 	gen := NewTableGeneratorWithOptions(false) // No colors for testing
 	result := makeTestResult()
@@ -187,6 +236,42 @@ func TestTableGenerator(t *testing.T) {
 	// Verify CVEs appear
 	if !strings.Contains(output, "CVE-2021-0001") {
 		t.Error("Output should contain CVEs")
+	}
+}
+
+func TestTableGeneratorWithEPSSAndKEV(t *testing.T) {
+	gen := NewTableGeneratorWithOptions(false)
+
+	epss := 0.9
+	result := &models.ConsensusResult{
+		Target:   "alpine:3.18",
+		Scanners: []string{"trivy"},
+		Consensus: []models.Vulnerability{
+			{
+				CVE:              "CVE-2024-0001",
+				Package:          "openssl",
+				InstalledVersion: "1.0.0",
+				Severity:         models.SeverityHigh,
+				KEV:              &models.KEVInfo{IsKEV: true},
+				EPSSScore:        &epss,
+			},
+		},
+		UniqueFindings:     map[string][]models.Vulnerability{},
+		AllVulnerabilities: []models.Vulnerability{},
+		AnalysisTime:       time.Now(),
+	}
+
+	var buf bytes.Buffer
+	if err := gen.Generate(result, &buf); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "EPSS") {
+		t.Error("Output should contain EPSS column")
+	}
+	if !strings.Contains(output, "90.00%") {
+		t.Error("Output should contain EPSS percentage")
 	}
 }
 
@@ -301,6 +386,15 @@ func TestTruncate(t *testing.T) {
 				t.Errorf("truncate(%q, %d) = %q, want %q", tt.input, tt.maxLen, got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestOrDash(t *testing.T) {
+	if got := orDash(""); got != "-" {
+		t.Errorf("orDash(empty) = %q, want '-'", got)
+	}
+	if got := orDash("1.2.3"); got != "1.2.3" {
+		t.Errorf("orDash(non-empty) = %q, want '1.2.3'", got)
 	}
 }
 

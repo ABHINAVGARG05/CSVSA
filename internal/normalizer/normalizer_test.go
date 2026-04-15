@@ -259,6 +259,72 @@ func TestFilterBySeverity(t *testing.T) {
 	}
 }
 
+func TestMergeVulnerabilities(t *testing.T) {
+	n := NewNormalizer()
+
+	results := []models.ScanResult{
+		{
+			Scanner: "trivy",
+			Success: true,
+			Vulnerabilities: []models.Vulnerability{
+				{CVE: "CVE-1", Package: "pkg1", InstalledVersion: "1.0", Severity: models.SeverityHigh, Scanner: "trivy"},
+			},
+		},
+		{
+			Scanner: "grype",
+			Success: true,
+			Vulnerabilities: []models.Vulnerability{
+				{CVE: "CVE-1", Package: "pkg1", InstalledVersion: "1.0", Severity: models.SeverityHigh, Scanner: "grype"},
+				{CVE: "CVE-2", Package: "pkg2", InstalledVersion: "2.0", Severity: models.SeverityLow, Scanner: "grype"},
+			},
+		},
+	}
+
+	merged := n.MergeVulnerabilities(results)
+	if len(merged) != 2 {
+		t.Errorf("expected 2 merged keys, got %d", len(merged))
+	}
+
+	key := "CVE-1|pkg1|1.0"
+	if len(merged[key]) != 2 {
+		t.Errorf("expected 2 entries for %s, got %d", key, len(merged[key]))
+	}
+}
+
+func TestGroupByPackage(t *testing.T) {
+	n := NewNormalizer()
+	vulns := []models.Vulnerability{
+		{CVE: "CVE-1", Package: "pkg1"},
+		{CVE: "CVE-2", Package: "pkg1"},
+		{CVE: "CVE-3", Package: "pkg2"},
+	}
+
+	groups := n.GroupByPackage(vulns)
+	if len(groups) != 2 {
+		t.Errorf("expected 2 package groups, got %d", len(groups))
+	}
+	if len(groups["pkg1"]) != 2 {
+		t.Errorf("expected 2 vulns for pkg1, got %d", len(groups["pkg1"]))
+	}
+}
+
+func TestGroupByScanner(t *testing.T) {
+	n := NewNormalizer()
+	vulns := []models.Vulnerability{
+		{CVE: "CVE-1", Scanner: "trivy"},
+		{CVE: "CVE-2", Scanner: "trivy"},
+		{CVE: "CVE-3", Scanner: "grype"},
+	}
+
+	groups := n.GroupByScanner(vulns)
+	if len(groups) != 2 {
+		t.Errorf("expected 2 scanner groups, got %d", len(groups))
+	}
+	if len(groups["trivy"]) != 2 {
+		t.Errorf("expected 2 vulns for trivy, got %d", len(groups["trivy"]))
+	}
+}
+
 func TestGroupBySeverity(t *testing.T) {
 	n := NewNormalizer()
 
@@ -281,34 +347,6 @@ func TestGroupBySeverity(t *testing.T) {
 
 	if len(groups[models.SeverityMedium]) != 1 {
 		t.Errorf("Expected 1 MEDIUM, got %d", len(groups[models.SeverityMedium]))
-	}
-}
-
-func TestMergeVulnerabilities(t *testing.T) {
-	n := NewNormalizer()
-
-	results := []models.ScanResult{
-		{
-			Scanner: "trivy",
-			Success: true,
-			Vulnerabilities: []models.Vulnerability{
-				{CVE: "CVE-2021-0001", Package: "pkg1", InstalledVersion: "1.0.0", Scanner: "trivy"},
-			},
-		},
-		{
-			Scanner: "grype",
-			Success: true,
-			Vulnerabilities: []models.Vulnerability{
-				{CVE: "CVE-2021-0001", Package: "pkg1", InstalledVersion: "1.0.0", Scanner: "grype"},
-			},
-		},
-	}
-
-	merged := n.MergeVulnerabilities(results)
-
-	key := "CVE-2021-0001|pkg1|1.0.0"
-	if len(merged[key]) != 2 {
-		t.Errorf("Expected 2 entries for key %s, got %d", key, len(merged[key]))
 	}
 }
 

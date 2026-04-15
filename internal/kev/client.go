@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	KEVURL          = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
-	DefaultTimeout  = 15 * time.Second
-	CacheTTL        = 24 * time.Hour
+	KEVURL         = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+	DefaultTimeout = 15 * time.Second
+	CacheTTL       = 24 * time.Hour
 )
 
 type Entry struct {
@@ -36,16 +36,41 @@ type catalog struct {
 }
 
 type Client struct {
+	baseURL    string
 	mu         sync.RWMutex
 	index      map[string]Entry
 	fetchedAt  time.Time
 	httpClient *http.Client
 }
 
-func NewClient() *Client {
-	return &Client{
+// Option configures the KEV client.
+type Option func(*Client)
+
+// WithBaseURL overrides the KEV catalog URL (useful for tests).
+func WithBaseURL(url string) Option {
+	return func(c *Client) {
+		c.baseURL = url
+	}
+}
+
+// WithHTTPClient sets a custom HTTP client.
+func WithHTTPClient(client *http.Client) Option {
+	return func(c *Client) {
+		c.httpClient = client
+	}
+}
+
+func NewClient(opts ...Option) *Client {
+	client := &Client{
+		baseURL:    KEVURL,
 		httpClient: &http.Client{Timeout: DefaultTimeout},
 	}
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	return client
 }
 
 func (c *Client) IsKEV(ctx context.Context, cveID string) (bool, Entry, error) {
@@ -79,7 +104,7 @@ func (c *Client) ensureLoaded(ctx context.Context) error {
 }
 
 func (c *Client) fetch(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, KEVURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL, nil)
 	if err != nil {
 		return fmt.Errorf("kev: creating request: %w", err)
 	}
